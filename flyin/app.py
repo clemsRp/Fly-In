@@ -42,16 +42,19 @@ class App(QApplication):
 
         nav = MyWidget(
             int(0.2 * width) - 15, height - 20,
-            window._draw_file_navigator, "black", window
+            window._draw_file_navigator,
+            "Navigator", "black", window
         )
 
         visu = MyWidget(
             int(0.6 * width) - 10, height - 20,
-            window._draw_visualization, "black", window
+            window._draw_visualization,
+            "Visualization", "black", window
         )
         stats = MyWidget(
             int(0.2 * width) - 15, height - 20,
-            window._draw_stats, "black", window
+            window._draw_stats,
+            "Stats", "black", window
         )
 
         nav.move(10, 125)

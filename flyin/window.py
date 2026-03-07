@@ -13,7 +13,7 @@ class MyWidget(QWidget):
     def __init__(
                 self, width: int, height: int,
                 func: Callable[[Any, QPainter], None],
-                color: str = "red", parent: Any = None
+                text: str, color: str = "red", parent: Any = None
             ) -> None:
         '''
         Initialize the widget
@@ -32,6 +32,7 @@ class MyWidget(QWidget):
         self.w_height = height
         self.func = func
         self.color = color
+        self.text = text
         self.setFixedSize(width, height)
 
     def paintEvent(self, event: Any) -> None:
@@ -45,10 +46,34 @@ class MyWidget(QWidget):
         '''
         painter = QPainter(self)
 
+        font_size: int = 15
+
         self.parent_ref.engine.draw_rectangle(
             painter,
-            0, 0, self.w_width, self.w_height, 1,
+            0, 2 * font_size, self.w_width,
+            self.w_height - 2 * font_size, 1,
             QColor("white"), QColor(0, 0, 0, 0)
+        )
+
+        self.parent_ref.engine.draw_line(
+            painter,
+            25, 2 * font_size,
+            50 + int(len(self.text) * font_size * 0.6),
+            2 * font_size,
+            1, QColor("black")
+        )
+
+        self.parent_ref.engine.draw_rectangle(
+            painter,
+            25, font_size, int(25 + (len(self.text) * 0.6 * font_size)),
+            2 * font_size, 1,
+            QColor("white"), QColor(0, 0, 0, 0)
+        )
+
+        self.parent_ref.engine.write_text(
+            painter,
+            36, int(2.5 * font_size), self.text,
+            QColor("white"), QFont("Arial", font_size)
         )
 
         self.func(self, painter)
@@ -174,6 +199,7 @@ class Window(QMainWindow):
         Return:
             None
         '''
+        start_y: int = 45
         line: int = 12
         nb_line: int = 1
 
@@ -194,7 +220,7 @@ class Window(QMainWindow):
             deep: int = len(parties) - 1
             indentation: str = "    " * deep
 
-            y_pos = int(line + line * nb_line * 1.5)
+            y_pos = int(line + line * nb_line * 1.5) + start_y
             x_pos = line + (deep * 20)
             prefixe = "     "
 
@@ -288,6 +314,7 @@ class Window(QMainWindow):
         y: int = int(cell_y // 2 + (node.y + 0.5) * cell_y)
 
         diameter: int = min([cell_x, cell_y])
+        diameter = min([diameter, 150])
 
         x -= int(diameter * 0.7 / 2)
         y -= int(diameter * 0.7 / 2)
