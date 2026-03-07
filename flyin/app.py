@@ -16,7 +16,7 @@ class App(QApplication):
         Initialize the App
 
         Args:
-            None
+            vars: Vars = All the "global" variables
         Return:
             None
         '''

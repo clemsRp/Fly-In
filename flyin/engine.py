@@ -10,6 +10,14 @@ class Engine:
     '''
 
     def __init__(self, window: Any) -> None:
+        '''
+        Initialize the engine
+
+        Args:
+            None
+        Return:
+            None
+        '''
         self.window = window
 
     def write_text(

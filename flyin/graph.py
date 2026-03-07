@@ -50,7 +50,12 @@ class Node:
 
     def __str__(self) -> str:
         '''
-        Definition of how to print a node
+        Define how to print a node
+
+        Args:
+            None
+        Return:
+            None
         '''
         color: str = self.color
         if self.color == "":
@@ -68,7 +73,12 @@ class Node:
 
     def __repr__(self) -> str:
         '''
-        Definition of how to print a node
+        Define how to print a node
+
+        Args:
+            None
+        Return:
+            None
         '''
         return self.__str__()
 
@@ -128,7 +138,12 @@ class Connection:
 
     def __str__(self) -> str:
         '''
-        Definition of how to print a connection
+        Define how to print a connection
+
+        Args:
+            None
+        Return:
+            None
         '''
         import textwrap
         content: str = f"""
@@ -139,7 +154,12 @@ class Connection:
 
     def __repr__(self) -> str:
         '''
-        Definition of how to print a connection
+        Define how to print a connection
+
+        Args:
+            None
+        Return:
+            None
         '''
         return self.__str__()
 

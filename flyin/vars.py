@@ -11,6 +11,11 @@ class Vars:
     def __init__(self) -> None:
         '''
         Initialize the class
+
+        Args:
+            None
+        Return:
+            None
         '''
         self.vars: dict[str, Any] = dict()
 

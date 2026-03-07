@@ -135,6 +135,11 @@ class Window(QMainWindow):
     def show(self) -> None:
         '''
         Execute the window
+
+        Args:
+            None
+        Return:
+            None
         '''
         super().show()
 
