@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from typing import Dict, KeysView, ValuesView, ItemsView, Any
+from typing import KeysView, ValuesView, ItemsView, Any
 
 
 class Vars:
@@ -12,7 +12,7 @@ class Vars:
         '''
         Initialize the class
         '''
-        self.vars: Dict[str, Any] = dict()
+        self.vars: dict[str, Any] = dict()
 
     def set_variable(self, key: str, value: Any) -> None:
         '''

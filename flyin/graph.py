@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import re
-from typing import Dict
+from typing import Any
 
 
 class Node:
@@ -72,7 +72,7 @@ class Node:
         '''
         return self.__str__()
 
-    def __eq__(self, node) -> bool:
+    def __eq__(self, node: Any) -> bool:
         '''
         Compare 2 nodes
 
@@ -81,6 +81,8 @@ class Node:
         Return:
             res: bool = The result of the comparaison
         '''
+        if not isinstance(node, Node):
+            return NotImplemented
         return self.name == node.name
 
     def __hash__(self) -> int:
@@ -142,7 +144,7 @@ class Connection:
         return self.__str__()
 
 
-class Graph(Dict):
+class Graph(dict[Node, list[tuple[Node, Connection]]]):
     '''
     Class representing a graph using nodes and connections
     '''
@@ -200,8 +202,8 @@ class Graph(Dict):
             raise ValueError("Start node and end node must be different nodes")
 
         for (node, connect) in self.items():
-            cond1 = any(node2.name == n[0].name for n in connect)
-            cond2 = any(node1.name == n[0].name for n in connect)
+            cond1: bool = any(node2.name == n[0].name for n in connect)
+            cond2: bool = any(node1.name == n[0].name for n in connect)
 
             if node1.name == node.name and cond1:
                 raise ValueError(

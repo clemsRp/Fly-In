@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import re
-from typing import List, Dict, Any
+from typing import Any
 from flyin.vars import Vars
 from flyin.graph import Node, Graph
 
@@ -20,10 +20,10 @@ class Parser:
         Return:
             None
         '''
-        self.lines: List[str] = list()
+        self.lines: list[str] = list()
         with open(filename, 'r') as f:
             content: str = f.read()
-            brut_lines: List[str] = content.split("\n")
+            brut_lines: list[str] = content.split("\n")
             for line in brut_lines:
                 if line == "" or line[0] == "#":
                     continue
@@ -32,14 +32,14 @@ class Parser:
                 else:
                     self.lines.append(line)
 
-    def _get_hub_option(self, option_string: str) -> Dict[str, str]:
+    def _get_hub_option(self, option_string: str) -> dict[str, str]:
         '''
         Return a dict corresponding to the optional parameters
 
         Args:
             option_string: str = The optional parameters
         Return:
-            res: Dict[str, str] = The parsed optional parameters
+            res: dict[str, str] = The parsed optional parameters
         '''
         if not option_string:
             return {}
@@ -51,14 +51,14 @@ class Parser:
             )
         )
 
-    def _get_hub(self, line: str, info_type: str) -> Dict[str, str]:
+    def _get_hub(self, line: str, info_type: str) -> dict[str, str]:
         '''
         Return a dict corresponding to the parameters of the node
 
         Args:
             line: str = The current line to parse
         Return:
-            res: Dict[str, str] = The parsed parameters
+            res: dict[str, str] = The parsed parameters
         '''
         mandatory: str = r" ([^\s\-]+) (\-?[0-9]+) (\-?[0-9]+)"
         option: str = r"\s?(\[.+\])?"
@@ -74,9 +74,9 @@ class Parser:
         y: int = int(m.group(3))
         options_str: str = m.group(4)
 
-        options: Dict[str, str] = self._get_hub_option(options_str)
+        options: dict[str, str] = self._get_hub_option(options_str)
 
-        res: Dict[str, Any] = {
+        res: dict[str, Any] = {
             "name": name,
             "x": x,
             "y": y
@@ -102,14 +102,14 @@ class Parser:
 
         return res
 
-    def _get_connection_option(self, option_string: str) -> Dict[str, str]:
+    def _get_connection_option(self, option_string: str) -> dict[str, str]:
         '''
         Return a dict corresponding to the optional parameters
 
         Args:
             option_string: str = The optional parameters
         Return:
-            res: Dict[str, str] = The parsed optional parameters
+            res: dict[str, str] = The parsed optional parameters
         '''
         if not option_string:
             return {}
@@ -120,14 +120,14 @@ class Parser:
             )
         )
 
-    def _get_connection(self, line: str) -> Dict[str, str]:
+    def _get_connection(self, line: str) -> dict[str, str]:
         '''
         Return a dict corresponding to the parameters of the node
 
         Args:
             line: str = The current line to parse
         Return:
-            res: Dict[str, str] = The parsed parameters
+            res: dict[str, str] = The parsed parameters
         '''
         pattern = r"connection: ([^\s\-]+)-([^\s\-]+)\s?(\[.+\])?"
 
@@ -140,9 +140,9 @@ class Parser:
         node2: str = m.group(2)
         options_str: str = m.group(3)
 
-        options: Dict[str, str] = self._get_connection_option(options_str)
+        options: dict[str, str] = self._get_connection_option(options_str)
 
-        res: Dict[str, Any] = {
+        res: dict[str, Any] = {
             "node1": node1,
             "node2": node2
         }
@@ -168,12 +168,12 @@ class Parser:
             None
         '''
         try:
-            parts: List[str] = line.split(" ")
+            parts: list[str] = line.split(" ")
             info_type: str = parts[0]
 
             # Hub
             if info_type in ["start_hub:", "hub:", "end_hub:"]:
-                params: Dict[str, Any] = self._get_hub(line, info_type)
+                params: dict[str, Any] = self._get_hub(line, info_type)
                 node: Node = Node(**params)
                 variables.vars["graph"].add_node(**params)
 
@@ -192,7 +192,7 @@ class Parser:
             # Connection
             elif info_type == "connection:":
                 params = self._get_connection(line)
-                node_names: List[str] = [
+                node_names: list[str] = [
                     node.name for node in variables.vars["graph"].keys()
                 ]
 
@@ -244,7 +244,7 @@ class Parser:
 
         # Get nb_drones
         try:
-            parts: List[str] = self.lines[0].split(" ")
+            parts: list[str] = self.lines[0].split(" ")
             if parts[0] != "nb_drones:":
                 raise ValueError(f"Invalid first line: '{self.lines[0]}'")
             nb_drones: int = int(parts[1])
@@ -265,7 +265,7 @@ class Parser:
         elif "end_hub" not in variables.get_keys():
             raise ValueError("Missing end_hub in map")
 
-        mini: List[int] = [float("inf"), float("inf")]
+        mini: list[int] = [1000000, 1000000]
         for node in graph.keys():
             if node.x < mini[0]:
                 mini[0] = node.x
