@@ -46,9 +46,9 @@ class Navigator(Widget):
         Return:
             None
         '''
-        root = Path(".")
-        for element in root.iterdir():
-            print(element)
+        root: Path = Path(".")
+        print(root)
+        # files = [file for file in ]
 
     def draw(self, painter: QPainter) -> None:
         '''

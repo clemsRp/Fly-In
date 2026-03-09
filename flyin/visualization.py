@@ -43,8 +43,8 @@ class Visualization(Widget):
         x2: int = int(cell_x // 2 + (n2.x + 0.5) * cell_x)
         y2: int = int(cell_y // 2 + (n2.y + 0.5) * cell_y)
 
-        start_x: int = self.x * self.window.width()
-        start_y: int = self.y * self.window.height()
+        start_x: int = int(self.x * self.window.width())
+        start_y: int = int(self.y * self.window.height())
 
         self.engine.draw_line(
             painter,
@@ -88,8 +88,8 @@ class Visualization(Widget):
         if self.vars.vars["end_hub"] == node:
             border_color = "green"
 
-        start_x: int = self.x * self.window.width()
-        start_y: int = self.y * self.window.height()
+        start_x: int = int(self.x * self.window.width())
+        start_y: int = int(self.y * self.window.height())
 
         self.engine.draw_circle(
             painter,

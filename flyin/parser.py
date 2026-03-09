@@ -52,53 +52,29 @@ class Parser:
         )
 
     def _get_hub(self, line: str, info_type: str) -> dict[str, str]:
-        '''
-        Return a dict corresponding to the parameters of the node
+        opt_content = r"(?:(?:color|zone|max_drones)=[^\s\]]+\s?)+"
 
-        Args:
-            line: str = The current line to parse
-        Return:
-            res: dict[str, str] = The parsed parameters
-        '''
-        mandatory: str = r" ([^\s\-]+) (\-?[0-9]+) (\-?[0-9]+)"
-        option: str = r"\s?(\[.+\])?"
-        pattern = info_type + mandatory + option
+        mandatory: str = rf"^{info_type} ([^\s\-]+) (-?[0-9]+) (-?[0-9]+)"
+        option: str = rf"(?: \[({opt_content})\])?$"
+        pattern: str = mandatory + option
 
-        m = re.search(pattern, line)
+        m = re.fullmatch(pattern, line)
 
         if not m:
             raise ValueError(f"Invalid line: '{line}'")
 
-        name: str = m.group(1)
-        x: int = int(m.group(2))
-        y: int = int(m.group(3))
-        options_str: str = m.group(4)
-
-        options: dict[str, str] = self._get_hub_option(options_str)
-
         res: dict[str, Any] = {
-            "name": name,
-            "x": x,
-            "y": y
+            "name": m.group(1),
+            "x": int(m.group(2)),
+            "y": int(m.group(3))
         }
 
-        # Zone
-        if "zone" in options.keys():
-            res["zone"] = options["zone"]
-        else:
-            res["zone"] = "normal"
+        options_str = m.group(4)
+        options = self._get_hub_option(options_str)
 
-        # Color
-        if "color" in options.keys():
-            res["color"] = options["color"]
-        else:
-            res["color"] = ""
-
-        # Max drones
-        if "max_drones" in options.keys():
-            res["max_drones"] = int(options["max_drones"])
-        else:
-            res["max_drones"] = 1
+        res["zone"] = options.get("zone", "normal")
+        res["color"] = options.get("color", "")
+        res["max_drones"] = int(options.get("max_drones", 1))
 
         return res
 
@@ -121,37 +97,21 @@ class Parser:
         )
 
     def _get_connection(self, line: str) -> dict[str, str]:
-        '''
-        Return a dict corresponding to the parameters of the node
+        mandatory: str = r"^connection: ([^\s\-]+)-([^\s\-]+)"
+        option: str = r"(?: \[max_link_capacity=([0-9]+)\])?$"
+        pattern: str = mandatory + option
 
-        Args:
-            line: str = The current line to parse
-        Return:
-            res: dict[str, str] = The parsed parameters
-        '''
-        pattern = r"connection: ([^\s\-]+)-([^\s\-]+)\s?(\[.+\])?"
-
-        m = re.search(pattern, line)
+        m = re.fullmatch(pattern, line)
 
         if not m:
-            raise ValueError(f"Invalid line: '{line}'")
-
-        node1: str = m.group(1)
-        node2: str = m.group(2)
-        options_str: str = m.group(3)
-
-        options: dict[str, str] = self._get_connection_option(options_str)
+            raise ValueError(f"Invalid connection line: '{line}'")
 
         res: dict[str, Any] = {
-            "node1": node1,
-            "node2": node2
+            "node1": m.group(1),
+            "node2": m.group(2)
         }
 
-        # Max link capacity
-        if "max_link_capacity" in options.keys():
-            res["max_link_capacity"] = int(options["max_link_capacity"])
-        else:
-            res["max_link_capacity"] = 1
+        res["max_link_capacity"] = int(m.group(3)) if m.group(3) else 1
 
         return res
 
