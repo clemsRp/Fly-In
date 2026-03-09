@@ -66,7 +66,16 @@ class Widget(ABC):
             start_y,
             int(self.width * self.window.width() - gap),
             int(self.height * self.window.height() - gap),
-            1, QColor("white"), QColor(0, 0, 0, 0)
+            1, QColor("white"), QColor("#031035")
+        )
+
+        self.engine.draw_rectangle(
+            painter,
+            start_x - gap + 1,
+            start_y,
+            gap - 2,
+            int(self.height * self.window.height() - gap),
+            1, QColor("#031035"), QColor("#031035")
         )
 
         if end_x <= start_x + int(self.width * self.window.width() - gap):
@@ -74,7 +83,7 @@ class Widget(ABC):
             self.engine.draw_line(
                 painter,
                 start_x + 25, start_y, end_x, start_y,
-                1, QColor("black")
+                1, QColor("#031035")
             )
 
             self.engine.draw_rectangle(

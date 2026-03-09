@@ -11,26 +11,16 @@ class Parser:
     Class that parse a given file into a graph
     '''
 
-    def __init__(self, filename: str) -> None:
+    def __init__(self) -> None:
         '''
         Initialize the parser
 
         Args:
-            filename: str = The file's name to parse
+            None
         Return:
             None
         '''
-        self.lines: list[str] = list()
-        with open(filename, 'r') as f:
-            content: str = f.read()
-            brut_lines: list[str] = content.split("\n")
-            for line in brut_lines:
-                if line == "" or line[0] == "#":
-                    continue
-                elif "#" in line:
-                    self.lines.append(line.split("#")[0])
-                else:
-                    self.lines.append(line)
+        pass
 
     def _get_hub_option(self, option_string: str) -> dict[str, str]:
         '''
@@ -188,15 +178,32 @@ class Parser:
         except Exception as e:
             raise ValueError(f"Invalid line: '{line}'", e)
 
-    def parser(self) -> Vars:
+    def parser(self, filename: str) -> Vars:
         '''
         Return the graph created with the parsed datas
 
         Args:
-            None
+            filename: str = The file's name to parse
         Return:
             variables: Vars = The variables class
         '''
+        suffix: str = filename.split(".")[-1]
+        if suffix != "txt":
+            raise ValueError(f"Invalid file type: '{suffix}'")
+
+        # Parse the given file
+        self.lines: list[str] = list()
+        with open(filename, 'r') as f:
+            content: str = f.read()
+            brut_lines: list[str] = content.split("\n")
+            for line in brut_lines:
+                if line == "" or line[0] == "#":
+                    continue
+                elif "#" in line:
+                    self.lines.append(line.split("#")[0])
+                else:
+                    self.lines.append(line)
+
         # Init Variables
         variables: Vars = Vars()
         graph: Graph = Graph()

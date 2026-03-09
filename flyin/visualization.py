@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from PyQt6.QtGui import QPainter, QColor
+from PyQt6.QtGui import QPainter, QColor, QFont, QFontMetrics
 from PyQt6.QtWidgets import QMainWindow
 from flyin.widget import Widget
 from flyin.graph import Node, Connection
@@ -78,15 +78,9 @@ class Visualization(Widget):
         x -= int(diameter * 0.7 / 2)
         y -= int(diameter * 0.7 / 2)
 
-        content_color: str = "orange"
+        color: str = "orange"
         if node.color != "":
-            content_color = node.color
-
-        border_color: str = content_color
-        if self.vars.vars["start_hub"] == node:
-            border_color = "red"
-        if self.vars.vars["end_hub"] == node:
-            border_color = "green"
+            color = node.color
 
         start_x: int = int(self.x * self.window.width())
         start_y: int = int(self.y * self.window.height())
@@ -94,7 +88,7 @@ class Visualization(Widget):
         self.engine.draw_circle(
             painter,
             int(start_x + x), int(start_y + y), int(diameter * 0.7),
-            2, QColor(border_color), QColor(content_color)
+            2, QColor("white"), QColor(color)
         )
 
     def _draw_visualization(
@@ -108,6 +102,31 @@ class Visualization(Widget):
         Return:
             None
         '''
+        start_x: int = int((self.x + self.width) * self.window.width())
+        start_y: int = int(self.y * self.window.height()) + 10
+
+        font: QFont = QFont("Arial", self.window.font_size)
+
+        metrics = QFontMetrics(font)
+
+        text_width = metrics.horizontalAdvance(str(self.window.filename)) + 25
+        text_height = metrics.height()
+
+        self.engine.draw_rectangle(
+            painter,
+            start_x - text_width, start_y,
+            text_width, text_height * 2, 1,
+            QColor("white"), QColor("white")
+        )
+
+        self.engine.write_text(
+            painter,
+            start_x - text_width + 12,
+            int(start_y + self.window.font_size * 1.5) + 2,
+            str(self.window.filename),
+            QColor("black"), font
+        )
+
         mini = [1000000, 1000000]
         maxi = [-1000000, -1000000]
 
@@ -138,6 +157,37 @@ class Visualization(Widget):
                 painter, node, cell_x, cell_y
             )
 
+    def _draw_error(self, painter: QPainter, error: str) -> None:
+        '''
+        Draw the error
+
+        Args:
+            painter: QPainter = The painter
+        Return:
+            None
+        '''
+        font: QFont = QFont("Arial", 25)
+        metrics = QFontMetrics(font)
+
+        text_width = metrics.horizontalAdvance(error)
+        text_height = metrics.height()
+
+        self.engine.write_text(
+            painter,
+            self.window.width() // 2 - 156,
+            self.window.height() // 2 + text_height,
+            "ERROR: Invalid map",
+            QColor("red"), QFont("Arial", 25)
+        )
+
+        self.engine.write_text(
+            painter,
+            self.window.width() // 2 - text_width // 2,
+            self.window.height() // 2 + 40 + text_height,
+            error,
+            QColor("red"), QFont("Arial", 25)
+        )
+
     def draw(self, painter: QPainter) -> None:
         '''
         Draw the personal part
@@ -148,4 +198,7 @@ class Visualization(Widget):
             None
         '''
         self.common_draw(painter)
-        self._draw_visualization(painter)
+        if self.window.error != "":
+            self._draw_error(painter, self.window.error)
+        else:
+            self._draw_visualization(painter)
