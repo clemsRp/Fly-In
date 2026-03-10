@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from abc import abstractmethod, ABC
-from PyQt6.QtGui import QPainter, QColor, QFont
+from PyQt6.QtGui import QPainter, QColor, QFont, QFontMetrics
 from PyQt6.QtWidgets import QMainWindow
 from flyin.engine import Engine
 from flyin.vars import Vars
@@ -57,8 +57,11 @@ class Widget(ABC):
             int(self.y * self.window.height() + gap),
             100
         ])
+        font: QFont = QFont("Arial", font_size)
+        metrics: QFontMetrics = QFontMetrics(font)
 
-        end_x: int = int(start_x + (len(self.title) + 5) * 0.6 * font_size)
+        text_width: int = metrics.horizontalAdvance(self.title)
+        end_x: int = int(start_x + text_width)
 
         self.engine.draw_rectangle(
             painter,
@@ -80,25 +83,11 @@ class Widget(ABC):
 
         if end_x <= start_x + int(self.width * self.window.width() - gap):
 
-            self.engine.draw_line(
+            self.engine.draw_button(
                 painter,
-                start_x + 25, start_y, end_x, start_y,
-                1, QColor("#031035")
-            )
-
-            self.engine.draw_rectangle(
-                painter,
-                start_x + 25,
-                start_y - font_size,
-                end_x - start_x - 25,
-                2 * font_size,
-                1, QColor("white"), QColor(0, 0, 0, 0)
-            )
-
-            self.engine.write_text(
-                painter,
-                start_x + 35, start_y + int(0.5 * font_size),
-                self.title, QColor("white"), QFont("Arial", font_size)
+                start_x + 25, start_y,
+                self.title, font_size,
+                QColor("white"), QColor("#031035")
             )
 
     @abstractmethod

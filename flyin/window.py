@@ -9,6 +9,7 @@ from flyin.widget import Widget
 from flyin.navigator import Navigator
 from flyin.visualization import Visualization
 from flyin.stats import Stats
+from flyin.drone import Drone
 from flyin.parser import Parser
 
 
@@ -30,7 +31,7 @@ class Window(QMainWindow):
         self.error: str = ""
 
         try:
-            self.filename: str = "maps/easy/01_linear_path.txt"
+            self.filename: str = "maps/challenger/01_the_impossible_dream.txt"
             self.vars: Vars = self.parser.parser(self.filename)
         except Exception as e:
             self.error = str(e)
@@ -53,6 +54,10 @@ class Window(QMainWindow):
                 self, self.engine, self.vars
             )
         ]
+
+        self.pressed_keys: set = set()
+
+        self.drones: list[Drone] = [Drone(500, 500, "assets/heads/1.png")]
 
         self.setMouseTracking(True)
 
@@ -87,10 +92,33 @@ class Window(QMainWindow):
                         0.8, 0.2, 0.195, 0.75, "Stats",
                         self, self.engine, self.vars
                     )
+
                 except Exception as e:
                     self.error = str(e)
 
         self.update()
+
+    def process_movements(self):
+        x_update = 0
+        y_update = 0
+        speed = 10
+
+        # On vérifie chaque touche indépendamment
+        if Qt.Key.Key_Up in self.pressed_keys:
+            y_update -= 1
+        if Qt.Key.Key_Down in self.pressed_keys:
+            y_update += 1
+        if Qt.Key.Key_Left in self.pressed_keys:
+            x_update -= 1
+        if Qt.Key.Key_Right in self.pressed_keys:
+            x_update += 1
+
+        # Si on bouge, on met à jour les drones
+        if x_update != 0 or y_update != 0:
+            for drone in self.drones:
+                drone.x += x_update * speed
+                drone.y += y_update * speed
+            self.update()
 
     def mouseMoveEvent(self, event):
         '''
@@ -108,6 +136,15 @@ class Window(QMainWindow):
             self.widgets[0].mouseMoveEvent(event)
 
         self.update()
+
+    def keyPressEvent(self, event):
+        self.pressed_keys.add(event.key())
+        self.process_movements()
+
+    def keyReleaseEvent(self, event):
+        # On retire la touche du set (elle n'est plus active)
+        if event.key() in self.pressed_keys:
+            self.pressed_keys.remove(event.key())
 
     def paintEvent(self, event: Any) -> None:
         '''
@@ -142,3 +179,6 @@ class Window(QMainWindow):
 
         for widget in self.widgets:
             widget.draw(painter)
+
+        for drone in self.drones:
+            drone.draw(painter)

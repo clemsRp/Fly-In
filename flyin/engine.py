@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from PyQt6.QtGui import QFont, QColor, QPainter, QPen, QBrush
+from PyQt6.QtGui import QFont, QColor, QPainter, QPen, QBrush, QFontMetrics
 from typing import Any
 
 
@@ -120,3 +120,48 @@ class Engine:
 
         # Pour un cercle, width et height doivent être identiques
         painter.drawEllipse(x, y, diameter, diameter)
+
+    def draw_button(
+                self, painter: QPainter,
+                x: int, y: int, text: str,
+                font_size: int,
+                border_color: QColor, content_color: QColor,
+                width: int = -1
+            ) -> None:
+        '''
+        Draw a button
+
+        Args:
+            None
+        Return:
+            None
+        '''
+        font: QFont = QFont("Arial", font_size)
+        metrics: QFontMetrics = QFontMetrics(font)
+
+        text_width: int = metrics.horizontalAdvance(text)
+        if width != -1:
+            text_width = width
+        self.draw_line(
+            painter,
+            x, y,
+            x + int(text_width + 1.5 * font_size),
+            y,
+            1, content_color
+        )
+
+        self.draw_rectangle(
+            painter,
+            x,
+            y - font_size,
+            int(text_width + 1.5 * font_size),
+            2 * font_size,
+            1, border_color, content_color
+        )
+
+        self.write_text(
+            painter,
+            int(x + font_size * 0.75),
+            int(y + font_size * 0.5),
+            text, border_color, font
+        )
