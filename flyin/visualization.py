@@ -23,6 +23,8 @@ class Visualization(Widget):
             ) -> None:
         super().__init__(x, y, width, height, title, window, engine, vars)
 
+        self.state: str = "neutral"
+
     def _draw_connection(
                 self,
                 painter: QPainter, connection: Connection,
@@ -191,6 +193,19 @@ class Visualization(Widget):
             QColor("red"), QFont("Arial", 25)
         )
 
+    def keyPressEvent(self, move: str) -> None:
+        '''
+        Handle the user choices
+
+        Args:
+            None
+        Return:
+            None
+        '''
+        if move == "pause" and self.state not in ["pause", "working"]:
+            return
+        self.state = move
+
     def draw(self, painter: QPainter) -> None:
         '''
         Draw the personal part
@@ -205,3 +220,12 @@ class Visualization(Widget):
             self._draw_error(painter, self.window.error)
         else:
             self._draw_visualization(painter)
+
+            if self.state == "start":
+                self._draw_start(painter)
+            elif self.state == "end":
+                self._draw_end(painter)
+            elif self.state == "start":
+                self._draw_start(painter)
+            elif self.state == "start":
+                self._draw_start(painter)

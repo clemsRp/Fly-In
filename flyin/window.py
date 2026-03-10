@@ -56,9 +56,29 @@ class Window(QMainWindow):
             )
         ]
 
-        self.drones: list[Drone] = [Drone(500, 500, "assets/icons/logo.png")]
+        self.drones: list[Drone] = []
 
         self.font_size: int = 12
+
+    def keyPressEvent(self, event: Any) -> None:
+        '''
+        Handle the key event
+
+        Args:
+            None
+        Return:
+            None
+        '''
+        if event.key() == Qt.Key.Key_S:
+            self.widgets[1].keyPressEvent("start")
+        elif event.key() == Qt.Key.Key_E:
+            self.widgets[1].keyPressEvent("end")
+        elif event.key() == Qt.Key.Key_P:
+            self.widgets[1].keyPressEvent("pas")
+        elif event.key() == Qt.Key.Key_A:
+            self.widgets[1].keyPressEvent("animation")
+        elif event.key() == Qt.Key.Key_W:
+            self.widgets[1].keyPressEvent("pause")
 
     def mousePressEvent(self, event: Any) -> None:
         '''

@@ -100,6 +100,9 @@ class Widget(ABC):
     def mouseMoveEvent(self, event: Any) -> None:
         pass
 
+    def keyPressEvent(self, move: str) -> None:
+        pass
+
     @abstractmethod
     def draw(self, painter: QPainter) -> None:
         '''
