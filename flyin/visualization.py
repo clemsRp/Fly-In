@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 
+from typing import TYPE_CHECKING
 from PyQt6.QtGui import QPainter, QColor, QFont, QFontMetrics
-from PyQt6.QtWidgets import QMainWindow
 from flyin.widget import Widget
 from flyin.graph import Node, Connection
 from flyin.engine import Engine
 from flyin.vars import Vars
+
+if TYPE_CHECKING:
+    from flyin.window import Window
 
 
 class Visualization(Widget):
@@ -16,7 +19,7 @@ class Visualization(Widget):
     def __init__(
                 self, x: int | float, y: int | float,
                 width: int | float, height: int | float, title: str,
-                window: QMainWindow, engine: Engine, vars: Vars
+                window: "Window", engine: Engine, vars: Vars
             ) -> None:
         super().__init__(x, y, width, height, title, window, engine, vars)
 

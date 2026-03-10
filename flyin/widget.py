@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 
+from pathlib import Path
+from typing import Any, TYPE_CHECKING
 from abc import abstractmethod, ABC
 from PyQt6.QtGui import QPainter, QColor, QFont, QFontMetrics
-from PyQt6.QtWidgets import QMainWindow
 from flyin.engine import Engine
 from flyin.vars import Vars
+
+if TYPE_CHECKING:
+    from flyin.window import Window
 
 
 class Widget(ABC):
@@ -15,7 +19,7 @@ class Widget(ABC):
     def __init__(
                 self, x: int | float, y: int | float,
                 width: int | float, height: int | float, title: str,
-                window: QMainWindow, engine: Engine, vars: Vars
+                window: "Window", engine: Engine, vars: Vars
             ) -> None:
         '''
         Initialize the widget
@@ -89,6 +93,12 @@ class Widget(ABC):
                 self.title, font_size,
                 QColor("white"), QColor("#031035")
             )
+
+    def mousePressEvent(self, event: Any) -> str | Path:
+        return ""
+
+    def mouseMoveEvent(self, event: Any) -> None:
+        pass
 
     @abstractmethod
     def draw(self, painter: QPainter) -> None:

@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 
 from pathlib import Path
-from typing import Any
+from typing import Any, TYPE_CHECKING
 from PyQt6.QtGui import QPainter, QColor, QFont, QPixmap
-from PyQt6.QtWidgets import QMainWindow
 from flyin.widget import Widget
 from flyin.engine import Engine
 from flyin.vars import Vars
+
+if TYPE_CHECKING:
+    from flyin.window import Window
 
 
 class Navigator(Widget):
@@ -17,7 +19,7 @@ class Navigator(Widget):
     def __init__(
                 self, x: int | float, y: int | float,
                 width: int | float, height: int | float, title: str,
-                window: QMainWindow, engine: Engine, vars: Vars
+                window: "Window", engine: Engine, vars: Vars
             ) -> None:
         super().__init__(x, y, width, height, title, window, engine, vars)
 
@@ -26,7 +28,7 @@ class Navigator(Widget):
         }
 
         self.files: list[dict[str, Any]] = self._init_files()
-        self._pixmap_cache = {}
+        self._pixmap_cache: dict[str, QPixmap] = {}
         self.hovered: str = ""
 
     def get_pixmap(self, path: str) -> QPixmap:
@@ -45,7 +47,7 @@ class Navigator(Widget):
             )
         return self._pixmap_cache[path]
 
-    def _img_path(self, file) -> str:
+    def _img_path(self, file: Path) -> str:
         '''
         Return the path of the image
         corresponding to the file/directory
@@ -140,7 +142,7 @@ class Navigator(Widget):
                 self.y * self.window.height() +
                 index * self.window.font_size * 1.5 + 42
             )
-            end_y: int = (self.y + self.height) * self.window.height()
+            end_y: int = int((self.y + self.height) * self.window.height())
             if temp_y >= int(end_y - self.window.font_size):
                 break
 
@@ -205,7 +207,7 @@ class Navigator(Widget):
         self.common_draw(painter)
         self._draw_tree(painter)
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event: Any) -> str | Path:
         '''
         Handle the mouse event
 
@@ -214,7 +216,7 @@ class Navigator(Widget):
         Return:
             None
         '''
-        displayed_files: list[str] = list()
+        displayed_files: list[dict[str, Any]] = list()
         for file in self.files:
             if self._is_displayable(file["file"]):
                 displayed_files.append(file)
@@ -225,7 +227,7 @@ class Navigator(Widget):
         )
 
         if index >= len(displayed_files):
-            return
+            return ""
 
         for file in self.files:
             search_file = file["name"] == displayed_files[index]["name"]
@@ -234,11 +236,11 @@ class Navigator(Widget):
                 file["is_open"] = not file["is_open"]
             elif search_file:
                 self.hovered = file["name"]
-                return file["file"]
+                return Path(file["file"])
 
         return ""
 
-    def mouseMoveEvent(self, event):
+    def mouseMoveEvent(self, event: Any) -> None:
         '''
         Handle the mouse event
 
@@ -247,7 +249,7 @@ class Navigator(Widget):
         Return:
             None
         '''
-        displayed_files: list[str] = list()
+        displayed_files: list[dict[str, Any]] = list()
         for file in self.files:
             if self._is_displayable(file["file"]):
                 displayed_files.append(file)

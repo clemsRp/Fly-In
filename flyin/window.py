@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from pathlib import Path
 from typing import Any
 from PyQt6.QtGui import QColor, QPainter, QPixmap
 from PyQt6.QtWidgets import QMainWindow
@@ -23,6 +24,10 @@ class Window(QMainWindow):
         Initialize the app
         '''
         super().__init__()
+        super().setWindowTitle("Tobikomu")
+        super().resize(1920, 925)
+        self.setMinimumSize(800, 600)
+        self.setMouseTracking(True)
 
         from flyin.engine import Engine
 
@@ -35,10 +40,6 @@ class Window(QMainWindow):
             self.vars: Vars = self.parser.parser(self.filename)
         except Exception as e:
             self.error = str(e)
-
-        super().setWindowTitle("Tobikomu")
-        super().resize(1920, 925)
-        self.setMinimumSize(800, 600)
 
         self.widgets: list[Widget] = [
             Navigator(
@@ -55,15 +56,11 @@ class Window(QMainWindow):
             )
         ]
 
-        self.pressed_keys: set = set()
-
-        self.drones: list[Drone] = [Drone(500, 500, "assets/heads/1.png")]
-
-        self.setMouseTracking(True)
+        self.drones: list[Drone] = [Drone(500, 500, "assets/icons/logo.png")]
 
         self.font_size: int = 12
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event: Any) -> None:
         '''
         Handle the mouse event
 
@@ -76,11 +73,11 @@ class Window(QMainWindow):
         y: int = event.pos().y()
 
         if x <= int(0.2 * self.width()) and y >= int(0.2 * self.height()):
-            res: str = self.widgets[0].mousePressEvent(event)
+            res: str | Path = self.widgets[0].mousePressEvent(event)
             if res != "":
                 self.error = ""
                 try:
-                    self.filename = res
+                    self.filename = str(res)
                     self.vars = self.parser.parser(str(self.filename))
 
                     self.widgets[1] = Visualization(
@@ -98,29 +95,7 @@ class Window(QMainWindow):
 
         self.update()
 
-    def process_movements(self):
-        x_update = 0
-        y_update = 0
-        speed = 10
-
-        # On vérifie chaque touche indépendamment
-        if Qt.Key.Key_Up in self.pressed_keys:
-            y_update -= 1
-        if Qt.Key.Key_Down in self.pressed_keys:
-            y_update += 1
-        if Qt.Key.Key_Left in self.pressed_keys:
-            x_update -= 1
-        if Qt.Key.Key_Right in self.pressed_keys:
-            x_update += 1
-
-        # Si on bouge, on met à jour les drones
-        if x_update != 0 or y_update != 0:
-            for drone in self.drones:
-                drone.x += x_update * speed
-                drone.y += y_update * speed
-            self.update()
-
-    def mouseMoveEvent(self, event):
+    def mouseMoveEvent(self, event: Any) -> None:
         '''
         Handle the mouse event
 
@@ -136,15 +111,6 @@ class Window(QMainWindow):
             self.widgets[0].mouseMoveEvent(event)
 
         self.update()
-
-    def keyPressEvent(self, event):
-        self.pressed_keys.add(event.key())
-        self.process_movements()
-
-    def keyReleaseEvent(self, event):
-        # On retire la touche du set (elle n'est plus active)
-        if event.key() in self.pressed_keys:
-            self.pressed_keys.remove(event.key())
 
     def paintEvent(self, event: Any) -> None:
         '''
