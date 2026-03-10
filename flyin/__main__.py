@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 
-from flyin.parser import Parser
+from flyin.app import App
 
 
 if __name__ == "__main__":
-    parser = Parser("maps/hard/03_ultimate_challenge.txt")
+    try:
+        app: App = App()
+        app.launch()
+
+    except Exception as e:
+        print(e)

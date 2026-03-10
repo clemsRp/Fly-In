@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import re
-from typing import Dict, Tuple, List
+from typing import Any
 
 
 class Node:
@@ -34,11 +34,9 @@ class Node:
 
         if " " in name or "-" in name:
             raise ValueError(f"Invalid name: '{name}'")
-        elif x < 0 or y < 0:
-            raise ValueError(f"Invalid coordinates: '{x} {y}'")
         elif zone not in ["normal", "blocked", "restricted", "priority"]:
             raise ValueError(f"Invalid zone type: '{zone}'")
-        elif not re.fullmatch('$[a-z]+^', color):
+        elif not re.fullmatch('^[a-z]+$', color):
             raise ValueError(f"Invalid color: '{color}'")
         elif max_drones < 1:
             raise ValueError(f"Invalid max_drones: '{max_drones}'")
@@ -49,6 +47,64 @@ class Node:
         self.zone: str = zone
         self.color: str = color
         self.max_drones: int = max_drones
+
+    def __str__(self) -> str:
+        '''
+        Define how to print a node
+
+        Args:
+            None
+        Return:
+            None
+        '''
+        color: str = self.color
+        if self.color == "":
+            color = "None"
+        return f"""
+        +-----------------------+
+        | NODE: {self.name}\t\t|
+        +-----------------------+
+        | Pos\t: ({self.x}, {self.y})\t|
+        | Zone\t: {self.zone}\t|
+        | Color\t: {color}\t\t|
+        | Drones: {self.max_drones}\t\t|
+        +-----------------------+
+        """
+
+    def __repr__(self) -> str:
+        '''
+        Define how to print a node
+
+        Args:
+            None
+        Return:
+            None
+        '''
+        return self.__str__()
+
+    def __eq__(self, node: Any) -> bool:
+        '''
+        Compare 2 nodes
+
+        Args:
+            node: Node = The compared node
+        Return:
+            res: bool = The result of the comparaison
+        '''
+        if not isinstance(node, Node):
+            return NotImplemented
+        return self.name == node.name
+
+    def __hash__(self) -> int:
+        '''
+        Hash the node object
+
+        Args:
+            None
+        Return:
+            res: int = The hash
+        '''
+        return hash((self.x, self.y))
 
 
 class Connection:
@@ -80,8 +136,35 @@ class Connection:
         self.end: Node = node2
         self.max_link_capacity: int = max_link_capacity
 
+    def __str__(self) -> str:
+        '''
+        Define how to print a connection
 
-class Graph:
+        Args:
+            None
+        Return:
+            None
+        '''
+        import textwrap
+        content: str = f"""
+        [LINK] {self.start.name} <---> {self.end.name}
+               Capacity: {self.max_link_capacity} drones
+        """
+        return textwrap.dedent(content).strip()
+
+    def __repr__(self) -> str:
+        '''
+        Define how to print a connection
+
+        Args:
+            None
+        Return:
+            None
+        '''
+        return self.__str__()
+
+
+class Graph(dict[Node, list[tuple[Node, Connection]]]):
     '''
     Class representing a graph using nodes and connections
     '''
@@ -95,7 +178,7 @@ class Graph:
         Return:
             None
         '''
-        self.graph: Dict[Node, List[Tuple[Node, Connection]]] = dict()
+        super().__init__()
 
     def add_node(
                 self, name: str, x: int, y: int,
@@ -114,12 +197,12 @@ class Graph:
         Return:
             None
         '''
-        for node in self.graph.keys():
+        for node in self.keys():
             if node.name == name:
                 raise ValueError(name + " is already a node")
 
         new_node: Node = Node(name, x, y, zone, color, max_drones)
-        self.graph[new_node] = list()
+        self[new_node] = list()
 
     def add_connection(
                 self, node1: Node, node2: Node,
@@ -138,9 +221,9 @@ class Graph:
         if node1.name == node2.name:
             raise ValueError("Start node and end node must be different nodes")
 
-        for (node, connect) in self.graph.items():
-            cond1 = any(node2.name == n[0].name for n in connect)
-            cond2 = any(node1.name == n[0].name for n in connect)
+        for (node, connect) in self.items():
+            cond1: bool = any(node2.name == n[0].name for n in connect)
+            cond2: bool = any(node1.name == n[0].name for n in connect)
 
             if node1.name == node.name and cond1:
                 raise ValueError(
@@ -158,5 +241,5 @@ class Graph:
             node2, node1, max_link_capacity
         )
 
-        self.graph[node1].append((node2, new_connection1))
-        self.graph[node2].append((node1, new_connection2))
+        self[node1].append((node2, new_connection1))
+        self[node2].append((node1, new_connection2))

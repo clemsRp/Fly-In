@@ -11,7 +11,7 @@ install:
 	uv add PyQt6
 
 run:
-	uv run $(EXEC) $(NAME)
+	uv run $(EXEC) -m $(NAME)
 
 debug:
 	uv run $(EXEC) -m $(DEBUGER) $(NAME)
@@ -34,5 +34,6 @@ clean:
 	rm -rf .mypy_cache
 	rm -rf .pytest_cache
 	rm -rf *.pyc
+	rm -rf .venv
 
 .PHONY: install run debug lint lint-strict clean

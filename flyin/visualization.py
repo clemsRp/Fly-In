@@ -1,0 +1,231 @@
+#!/usr/bin/env python3
+
+from typing import TYPE_CHECKING
+from PyQt6.QtGui import QPainter, QColor, QFont, QFontMetrics
+from flyin.widget import Widget
+from flyin.graph import Node, Connection
+from flyin.engine import Engine
+from flyin.vars import Vars
+
+if TYPE_CHECKING:
+    from flyin.window import Window
+
+
+class Visualization(Widget):
+    '''
+    Class for the visualization
+    '''
+
+    def __init__(
+                self, x: int | float, y: int | float,
+                width: int | float, height: int | float, title: str,
+                window: "Window", engine: Engine, vars: Vars
+            ) -> None:
+        super().__init__(x, y, width, height, title, window, engine, vars)
+
+        self.state: str = "neutral"
+
+    def _draw_connection(
+                self,
+                painter: QPainter, connection: Connection,
+                cell_x: int, cell_y: int
+            ) -> None:
+        '''
+        Draw a connection inside the window
+
+        Args:
+            painter: QPainter = The painter
+            connection: Connection = The connection to draw
+            cell_x: int = The x size of a cell
+            cell_y: int = The y size of a cell
+        Return:
+            None
+        '''
+        n1: Node = connection.start
+        n2: Node = connection.end
+        x1: int = int(cell_x // 2 + (n1.x + 0.5) * cell_x)
+        y1: int = int(cell_y // 2 + (n1.y + 0.5) * cell_y)
+        x2: int = int(cell_x // 2 + (n2.x + 0.5) * cell_x)
+        y2: int = int(cell_y // 2 + (n2.y + 0.5) * cell_y)
+
+        start_x: int = int(self.x * self.window.width())
+        start_y: int = int(self.y * self.window.height())
+
+        self.engine.draw_line(
+            painter,
+            int(start_x + x1), int(start_y + y1),
+            int(start_x + x2), int(start_y + y2),
+            1, QColor("white")
+        )
+
+    def _draw_node(
+                self,
+                painter: QPainter, node: Node,
+                cell_x: int, cell_y: int
+            ) -> None:
+        '''
+        Draw a connection inside the window
+
+        Args:
+            painter: QPainter = The painter
+            connection: Connection = The connection to draw
+            cell_x: int = The x size of a cell
+            cell_y: int = The y size of a cell
+        Return:
+            None
+        '''
+        x: int = int(cell_x // 2 + (node.x + 0.5) * cell_x)
+        y: int = int(cell_y // 2 + (node.y + 0.5) * cell_y)
+
+        diameter: int = min([cell_x, cell_y])
+        diameter = min([diameter, 150])
+
+        x -= int(diameter * 0.7 / 2)
+        y -= int(diameter * 0.7 / 2)
+
+        color: str = "orange"
+        if node.color != "":
+            color = node.color
+
+        start_x: int = int(self.x * self.window.width())
+        start_y: int = int(self.y * self.window.height())
+
+        self.engine.draw_circle(
+            painter,
+            int(start_x + x), int(start_y + y), int(diameter * 0.7),
+            2, QColor("white"), QColor(color)
+        )
+
+    def _draw_visualization(
+                self, painter: QPainter
+            ) -> None:
+        '''
+        Draw the visualization
+
+        Args:
+            painter: QPainter = The painter
+        Return:
+            None
+        '''
+        start_x: int = int((self.x + self.width) * self.window.width())
+        start_y: int = int(self.y * self.window.height()) + 10
+
+        font: QFont = QFont("Arial", self.window.font_size)
+
+        metrics = QFontMetrics(font)
+
+        text_width = metrics.horizontalAdvance(str(self.window.filename)) + 25
+        text_height = metrics.height()
+
+        self.engine.draw_rectangle(
+            painter,
+            start_x - text_width, start_y,
+            text_width, text_height * 2, 1,
+            QColor("white"), QColor("white")
+        )
+
+        self.engine.write_text(
+            painter,
+            start_x - text_width + 12,
+            int(start_y + self.window.font_size * 1.5) + 2,
+            str(self.window.filename),
+            QColor("black"), font
+        )
+
+        mini = [1000000, 1000000]
+        maxi = [-1000000, -1000000]
+
+        for node in self.vars.vars["graph"].keys():
+            if node.x < mini[0]:
+                mini[0] = node.x
+            if node.x > maxi[0]:
+                maxi[0] = node.x
+            if node.y < mini[1]:
+                mini[1] = node.y
+            if node.y > maxi[1]:
+                maxi[1] = node.y
+
+        cell_x: int = maxi[0] - mini[0] + 2
+        cell_y: int = maxi[1] - mini[1] + 2
+
+        cell_x = int(0.6 * self.window.width() // cell_x)
+        cell_y = int((self.window.height() - 150) // cell_y)
+
+        for liste in self.vars.vars["graph"].values():
+            for (node, connection) in liste:
+                self._draw_connection(
+                    painter, connection, cell_x, cell_y
+                )
+
+        for node in self.vars.vars["graph"].keys():
+            self._draw_node(
+                painter, node, cell_x, cell_y
+            )
+
+    def _draw_error(self, painter: QPainter, error: str) -> None:
+        '''
+        Draw the error
+
+        Args:
+            painter: QPainter = The painter
+        Return:
+            None
+        '''
+        font: QFont = QFont("Arial", 25)
+        metrics = QFontMetrics(font)
+
+        text_width = metrics.horizontalAdvance(error)
+        text_height = metrics.height()
+
+        self.engine.write_text(
+            painter,
+            self.window.width() // 2 - 156,
+            self.window.height() // 2 + text_height,
+            "ERROR: Invalid map",
+            QColor("red"), QFont("Arial", 25)
+        )
+
+        self.engine.write_text(
+            painter,
+            self.window.width() // 2 - text_width // 2,
+            self.window.height() // 2 + 40 + text_height,
+            error,
+            QColor("red"), QFont("Arial", 25)
+        )
+
+    def keyPressEvent(self, move: str) -> None:
+        '''
+        Handle the user choices
+
+        Args:
+            None
+        Return:
+            None
+        '''
+        if move == "pause" and self.state not in ["pause", "working"]:
+            return
+        self.state = move
+
+    def draw(self, painter: QPainter) -> None:
+        '''
+        Draw the personal part
+
+        Args:
+            None
+        Return:
+            None
+        '''
+        self.common_draw(painter)
+        if self.window.error != "":
+            self._draw_error(painter, self.window.error)
+        else:
+            self._draw_visualization(painter)
+
+            if self.state == "start":
+                self._draw_start(painter)
+            elif self.state == "end":
+                self._draw_end(painter)
+            elif self.state == "start":
+                self._draw_start(painter)
+            elif self.state == "start":
+                self._draw_start(painter)
