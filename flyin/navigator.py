@@ -3,6 +3,7 @@
 from pathlib import Path
 from typing import Any, TYPE_CHECKING
 from PyQt6.QtGui import QPainter, QColor, QFont, QPixmap
+from PyQt6.QtCore import Qt
 from flyin.widget import Widget
 from flyin.engine import Engine
 from flyin.vars import Vars
@@ -29,7 +30,7 @@ class Navigator(Widget):
 
         self.files: list[dict[str, Any]] = self._init_files()
         self._pixmap_cache: dict[str, QPixmap] = {}
-        self.hovered: str = ""
+        self.hovered: int = 0
         self.mouse_y: int = 0
         self.index: int = 0
 
@@ -150,14 +151,17 @@ class Navigator(Widget):
             )
 
             if view_top <= pos_y < view_bottom:
-                if file["name"] == self.hovered:
+                cond: bool = self.hovered <= pos_y + 5 + int(
+                    self.window.font_size * 1.5
+                )
+                if self.hovered >= pos_y + 5 and cond:
                     self.engine.draw_rectangle(
                         painter,
                         int(
                             self.x * self.window.width() +
-                            self.window.font_size - 5
+                            self.window.font_size + 2
                         ),
-                        pos_y - self.mouse_y + 2,
+                        pos_y + 5,
                         int((self.x + self.width) * self.window.width() - 18),
                         int(self.window.font_size * 1.5), 1,
                         QColor(0, 0, 0, 0), QColor(245, 232, 130, 30)
@@ -168,7 +172,7 @@ class Navigator(Widget):
                         self.x * self.window.width() +
                         2 * self.window.font_size + 24 * file["nb_tab"]
                     ),
-                    pos_y + 5,
+                    pos_y + 3,
                     self.get_pixmap(file["img_path"])
                 )
 
@@ -207,27 +211,51 @@ class Navigator(Widget):
         Return:
             None
         '''
-        displayed_files: list[dict[str, Any]] = list()
-        for file in self.files:
-            if self._is_displayable(file["file"]):
-                displayed_files.append(file)
+        if event.button() == Qt.MouseButton.LeftButton:
+            displayed_files: list[dict[str, Any]] = list()
+            for file in self.files:
+                if self._is_displayable(file["file"]):
+                    displayed_files.append(file)
 
-        index: int = int(
-            (event.pos().y() - (self.y * self.window.height() + 42) -
-             self.mouse_y)
-            // (self.window.font_size * 1.5)
-        )
+            index: int = int(
+                (event.pos().y() - (self.y * self.window.height() + 42) -
+                 self.mouse_y)
+                // (self.window.font_size * 1.5)
+            )
 
-        for file in self.files:
-            search_file = file["name"] == displayed_files[index]["name"]
-            if search_file and file["is_dir"]:
-                self.hovered = file["name"]
-                file["is_open"] = not file["is_open"]
-            elif search_file:
-                self.hovered = file["name"]
-                return Path(file["file"])
+            for file in self.files:
+                search_file = file["name"] == displayed_files[index]["name"]
+                if search_file and file["is_dir"]:
+                    self.hovered = event.position().y()
+                    file["is_open"] = not file["is_open"]
+                elif search_file:
+                    self.hovered = event.position().y()
+                    return Path(file["file"])
 
-        return ""
+            return "graph"
+
+        elif event.button() == Qt.MouseButton.RightButton:
+            displayed_files: list[dict[str, Any]] = list()
+            for file in self.files:
+                if self._is_displayable(file["file"]):
+                    displayed_files.append(file)
+
+            index: int = int(
+                (event.pos().y() - (self.y * self.window.height() + 42) -
+                 self.mouse_y)
+                // (self.window.font_size * 1.5)
+            )
+
+            for file in self.files:
+                search_file = file["name"] == displayed_files[index]["name"]
+                if search_file and file["is_dir"]:
+                    self.hovered = event.position().y()
+                    file["is_open"] = not file["is_open"]
+                elif search_file:
+                    self.hovered = event.position().y()
+                    return Path(file["file"])
+
+            return "graph"
 
     def wheelEvent(self, event: Any) -> bool:
         '''
@@ -285,6 +313,6 @@ class Navigator(Widget):
         for file in self.files:
             search_file = file["name"] == displayed_files[index]["name"]
             if search_file and file["is_dir"]:
-                self.hovered = file["name"]
+                self.hovered = event.pos().y()
             elif search_file:
-                self.hovered = file["name"]
+                self.hovered = event.pos().y()
