@@ -30,6 +30,8 @@ class Navigator(Widget):
         self.files: list[dict[str, Any]] = self._init_files()
         self._pixmap_cache: dict[str, QPixmap] = {}
         self.hovered: str = ""
+        self.mouse_y: int = 0
+        self.index: int = 0
 
     def get_pixmap(self, path: str) -> QPixmap:
         '''
@@ -128,40 +130,35 @@ class Navigator(Widget):
     def _draw_tree(self, painter: QPainter) -> None:
         '''
         Draw the tree
-
-        Args:
-            painter: QPainter = The painter
-        Return:
-            None
         '''
-        index: int = 0
+        display_index: int = 0
 
         for file in self.files:
+            if not self._is_displayable(file["file"]):
+                continue
 
-            temp_y: int = int(
+            pos_y: int = int(
                 self.y * self.window.height() +
-                index * self.window.font_size * 1.5 + 42
+                display_index * self.window.font_size * 1.5 + 42 +
+                self.mouse_y
             )
-            end_y: int = int((self.y + self.height) * self.window.height())
-            if temp_y >= int(end_y - self.window.font_size):
-                break
 
-            if self._is_displayable(file["file"]):
+            view_top = int(self.y * self.window.height() + 25)
+            view_bottom = int(
+                (self.y + self.height) * self.window.height() -
+                25
+            )
 
+            if view_top <= pos_y < view_bottom:
                 if file["name"] == self.hovered:
                     self.engine.draw_rectangle(
                         painter,
                         int(
                             self.x * self.window.width() +
-                            self.window.font_size + 2
+                            self.window.font_size - 5
                         ),
-                        int(
-                            self.y * self.window.height() +
-                            index * self.window.font_size * 1.5 + 42
-                        ),
-                        int(
-                            (self.x + self.width) * self.window.width() - 18
-                        ),
+                        pos_y - self.mouse_y + 2,
+                        int((self.x + self.width) * self.window.width() - 18),
                         int(self.window.font_size * 1.5), 1,
                         QColor(0, 0, 0, 0), QColor(245, 232, 130, 30)
                     )
@@ -169,13 +166,9 @@ class Navigator(Widget):
                 painter.drawPixmap(
                     int(
                         self.x * self.window.width() +
-                        2 * self.window.font_size +
-                        24 * file["nb_tab"]
+                        2 * self.window.font_size + 24 * file["nb_tab"]
                     ),
-                    int(
-                        self.y * self.window.height() +
-                        index * self.window.font_size * 1.5 + 42
-                    ),
+                    pos_y + 5,
                     self.get_pixmap(file["img_path"])
                 )
 
@@ -183,17 +176,15 @@ class Navigator(Widget):
                     painter,
                     int(
                         self.x * self.window.width() +
-                        3.5 * self.window.font_size +
-                        24 * file["nb_tab"]
+                        3.5 * self.window.font_size + 24 * file["nb_tab"]
                     ),
-                    int(
-                        self.y * self.window.height() +
-                        index * self.window.font_size * 1.5 + 55
-                    ),
+                    pos_y + int(self.window.font_size * 1.5),
                     file["name"], QColor("white"),
                     QFont("Arial", self.window.font_size)
                 )
-                index += 1
+
+            display_index += 1
+        self.index = display_index
 
     def draw(self, painter: QPainter) -> None:
         '''
@@ -204,6 +195,14 @@ class Navigator(Widget):
         Return:
             None
         '''
+        val = -int(
+            self.window.font_size * 1.5 * (self.index + 5) -
+            (self.x + self.height) * self.window.height()
+        )
+
+        if self.mouse_y < val and self.mouse_y < 0:
+            self.mouse_y = int(val - val % self.window.font_size * 1.5)
+
         self.common_draw(painter)
         self._draw_tree(painter)
 
@@ -222,12 +221,10 @@ class Navigator(Widget):
                 displayed_files.append(file)
 
         index: int = int(
-            (event.pos().y() - (self.y * self.window.height() + 42))
+            (event.pos().y() - (self.y * self.window.height() + 42) -
+             self.mouse_y)
             // (self.window.font_size * 1.5)
         )
-
-        if index >= len(displayed_files):
-            return ""
 
         for file in self.files:
             search_file = file["name"] == displayed_files[index]["name"]
@@ -239,6 +236,42 @@ class Navigator(Widget):
                 return Path(file["file"])
 
         return ""
+
+    def wheelEvent(self, event: Any) -> bool:
+        '''
+        Handle the mouse wheel
+
+        Args:
+            None
+        Return:
+            None
+        '''
+        liste: list[dict[str, Any]] = [
+            f for f in self.files if self._is_displayable(f["file"])
+        ]
+        if len(liste) < 35:
+            return False
+
+        delta = event.angleDelta().y()
+
+        """ pos_y: int = int(
+            self.y * self.window.height() +
+            42 + self.mouse_y
+        ) """
+
+        val: int = -int(
+            self.window.font_size * 1.5 * (self.index + 5) -
+            (self.x + self.height) * self.window.height()
+        )
+
+        cond1: bool = self.mouse_y < 0
+        cond2: bool = self.mouse_y >= val
+
+        if delta > 0 and cond1:
+            self.mouse_y += int(self.window.font_size * 1.5)
+        elif delta < 0 and cond2:
+            self.mouse_y -= int(self.window.font_size * 1.5)
+        return True
 
     def mouseMoveEvent(self, event: Any) -> None:
         '''

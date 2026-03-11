@@ -94,6 +94,9 @@ class Widget(ABC):
                 QColor("white"), QColor("#031035")
             )
 
+    def wheelEvent(self, event: Any) -> bool:
+        pass
+
     def mousePressEvent(self, event: Any) -> str | Path:
         return ""
 

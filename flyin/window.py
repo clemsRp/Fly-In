@@ -80,6 +80,22 @@ class Window(QMainWindow):
         elif event.key() == Qt.Key.Key_W:
             self.widgets[1].keyPressEvent("pause")
 
+    def wheelEvent(self, event: Any) -> None:
+        '''
+        Handle the mouse wheel
+
+        Args:
+            None
+        Return:
+            None
+        '''
+        x: int = event.position().x()
+        y: int = event.position().y()
+
+        if x <= int(0.2 * self.width()) and y >= int(0.2 * self.height()):
+            if self.widgets[0].wheelEvent(event):
+                self.update()
+
     def mousePressEvent(self, event: Any) -> None:
         '''
         Handle the mouse event
