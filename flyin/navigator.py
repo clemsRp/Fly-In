@@ -195,14 +195,6 @@ class Navigator(Widget):
         Return:
             None
         '''
-        val = -int(
-            self.window.font_size * 1.5 * (self.index + 5) -
-            (self.x + self.height) * self.window.height()
-        )
-
-        if self.mouse_y < val and self.mouse_y < 0:
-            self.mouse_y = int(val - val % self.window.font_size * 1.5)
-
         self.common_draw(painter)
         self._draw_tree(painter)
 
@@ -249,15 +241,10 @@ class Navigator(Widget):
         liste: list[dict[str, Any]] = [
             f for f in self.files if self._is_displayable(f["file"])
         ]
-        if len(liste) < 35:
+        if len(liste) // self.window.font_size >= 35:
             return False
 
         delta = event.angleDelta().y()
-
-        """ pos_y: int = int(
-            self.y * self.window.height() +
-            42 + self.mouse_y
-        ) """
 
         val: int = -int(
             self.window.font_size * 1.5 * (self.index + 5) -
@@ -268,9 +255,9 @@ class Navigator(Widget):
         cond2: bool = self.mouse_y >= val
 
         if delta > 0 and cond1:
-            self.mouse_y += int(self.window.font_size * 1.5)
+            self.mouse_y += int(self.window.font_size * 3)
         elif delta < 0 and cond2:
-            self.mouse_y -= int(self.window.font_size * 1.5)
+            self.mouse_y -= int(self.window.font_size * 3)
         return True
 
     def mouseMoveEvent(self, event: Any) -> None:

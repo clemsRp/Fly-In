@@ -95,7 +95,7 @@ class Widget(ABC):
             )
 
     def wheelEvent(self, event: Any) -> bool:
-        pass
+        return True
 
     def mousePressEvent(self, event: Any) -> str | Path:
         return ""

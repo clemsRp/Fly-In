@@ -229,3 +229,25 @@ class Visualization(Widget):
                 self._draw_start(painter)
             elif self.state == "start":
                 self._draw_start(painter)
+
+    def _draw_start(self, painter: QPainter) -> None:
+        '''
+        Draw the start
+
+        Args:
+            None
+        Return:
+            None
+        '''
+        pass
+
+    def _draw_end(self, painter: QPainter) -> None:
+        '''
+        Draw the start
+
+        Args:
+            None
+        Return:
+            None
+        '''
+        pass
