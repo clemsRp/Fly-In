@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
-from typing import TYPE_CHECKING
-from PyQt6.QtGui import QPainter, QColor, QFont, QFontMetrics
+from typing import TYPE_CHECKING, Any
+from PyQt6.QtGui import QPainter, QColor, QFont, QFontMetrics, QPixmap
+from PyQt6.QtCore import Qt
 from flyin.widget import Widget
 from flyin.graph import Node, Connection
 from flyin.engine import Engine
@@ -24,6 +25,10 @@ class Visualization(Widget):
         super().__init__(x, y, width, height, title, window, engine, vars)
 
         self.state: str = "neutral"
+        self.display: str = "graph"
+        self.img_ratio: int = 1
+        self.index: int = 0
+        self.content_lines: list[str] = []
 
     def _draw_connection(
                 self,
@@ -107,30 +112,6 @@ class Visualization(Widget):
         Return:
             None
         '''
-        start_x: int = int((self.x + self.width) * self.window.width())
-        start_y: int = int(self.y * self.window.height()) + 10
-
-        font: QFont = QFont("Arial", self.window.font_size)
-
-        metrics = QFontMetrics(font)
-
-        text_width = metrics.horizontalAdvance(str(self.window.filename)) + 25
-        text_height = metrics.height()
-
-        self.engine.draw_rectangle(
-            painter,
-            start_x - text_width, start_y,
-            text_width, text_height * 2, 1,
-            QColor("white"), QColor("white")
-        )
-
-        self.engine.write_text(
-            painter,
-            start_x - text_width + 12,
-            int(start_y + self.window.font_size * 1.5) + 2,
-            str(self.window.filename),
-            QColor("black"), font
-        )
 
         mini = [1000000, 1000000]
         maxi = [-1000000, -1000000]
@@ -216,9 +197,41 @@ class Visualization(Widget):
             None
         '''
         self.common_draw(painter)
+
+        text: str = ""
+        if self.window.error == "":
+            if self.display == "graph":
+                text = self.window.filename
+            else:
+                text = self.vars.vars["visu_file"]
+            start_x: int = int((self.x + self.width) * self.window.width())
+            start_y: int = int(self.y * self.window.height()) + 10
+
+            font: QFont = QFont("Arial", self.window.font_size)
+
+            metrics = QFontMetrics(font)
+
+            text_width = metrics.horizontalAdvance(str(text)) + 25
+            text_height = metrics.height()
+
+            self.engine.draw_rectangle(
+                painter,
+                start_x - text_width, start_y,
+                text_width, text_height * 2, 1,
+                QColor("white"), QColor("white")
+            )
+
+            self.engine.write_text(
+                painter,
+                start_x - text_width + 12,
+                int(start_y + self.window.font_size * 1.5) + 2,
+                text,
+                QColor("black"), font
+            )
+
         if self.window.error != "":
             self._draw_error(painter, self.window.error)
-        else:
+        elif self.display == "graph":
             self._draw_visualization(painter)
 
             if self.state == "start":
@@ -229,6 +242,87 @@ class Visualization(Widget):
                 self._draw_start(painter)
             elif self.state == "start":
                 self._draw_start(painter)
+        elif self.display == "img":
+            size: int = int(min([
+                self.width * self.window.width(),
+                self.height * self.window.height()
+            ]) * 0.7)
+            x: int = int(
+                self.x * self.window.width() +
+                (self.width * self.window.width()) // 2 -
+                size * self.img_ratio // 2
+            )
+            y: int = int(
+                self.y * self.window.height() +
+                (self.height * self.window.height()) // 2 -
+                size * self.img_ratio // 2
+            )
+            painter.drawPixmap(
+                x, y,
+                QPixmap(self.vars.vars["visu_file"]).scaled(
+                    int(size * self.img_ratio),
+                    int(size * self.img_ratio),
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation
+                )
+            )
+        else:
+            with open(self.vars.vars["visu_file"], 'r') as f:
+                self.content_lines = f.readlines()
+
+                for k in range(self.index, len(self.content_lines)):
+                    num: str = (3 - len(str(k))) * " " + str(k) + "   "
+
+                    y: int = int(
+                        (k - self.index) * self.window.font_size * 1.5 +
+                        self.y * self.window.height() + 55
+                    )
+
+                    if y > (self.y + self.height) * self.window.height():
+                        break
+
+                    self.engine.write_text(
+                        painter,
+                        int(self.x * self.window.width() + 35),
+                        int(
+                            (k - self.index) * self.window.font_size * 1.5 +
+                            self.y * self.window.height() + 55
+                        ),
+                        num + self.content_lines[k],
+                        QColor("white"), QFont("Arial", self.window.font_size)
+                    )
+
+    def wheelEvent(self, event: Any) -> bool:
+        '''
+        Handle the mouse wheel
+
+        Args:
+            None
+        Return:
+            None
+        '''
+        if self.display == "graph":
+            return False
+
+        delta = event.angleDelta().y()
+
+        if delta > 0:
+            if self.display == "img":
+                self.img_ratio = max([self.img_ratio - 0.1, 0.2])
+            elif len(self.content_lines) > 35:
+                self.index -= 1
+                if self.index < 0:
+                    self.index += 1
+
+        elif delta < 0:
+            if self.display == "img":
+                self.img_ratio = min([self.img_ratio + 0.1, 1.1])
+            elif len(self.content_lines) > 35:
+                self.index += 1
+                if self.index >= len(self.content_lines):
+                    self.index -= 1
+
+        return True
 
     def _draw_start(self, painter: QPainter) -> None:
         '''

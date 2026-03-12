@@ -43,6 +43,7 @@ class Widget(ABC):
         self.window = window
         self.engine = engine
         self.vars = vars
+        self.display: str = ""
 
     def common_draw(self, painter: QPainter) -> None:
         '''
@@ -97,7 +98,10 @@ class Widget(ABC):
     def wheelEvent(self, event: Any) -> bool:
         return True
 
-    def mousePressEvent(self, event: Any) -> str | Path:
+    def mousePressEventLeft(self, event: Any) -> str | Path:
+        return ""
+
+    def mousePressEventRight(self, event: Any) -> str | Path:
         return ""
 
     def mouseMoveEvent(self, event: Any) -> None:

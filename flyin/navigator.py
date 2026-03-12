@@ -3,7 +3,6 @@
 from pathlib import Path
 from typing import Any, TYPE_CHECKING
 from PyQt6.QtGui import QPainter, QColor, QFont, QPixmap
-from PyQt6.QtCore import Qt
 from flyin.widget import Widget
 from flyin.engine import Engine
 from flyin.vars import Vars
@@ -202,60 +201,67 @@ class Navigator(Widget):
         self.common_draw(painter)
         self._draw_tree(painter)
 
-    def mousePressEvent(self, event: Any) -> str | Path:
+    def mousePressEventLeft(self, event: Any) -> str | Path:
         '''
-        Handle the mouse event
+        Handle the mouse event left
 
         Args:
             None
         Return:
             None
         '''
-        if event.button() == Qt.MouseButton.LeftButton:
-            displayed_files: list[dict[str, Any]] = list()
-            for file in self.files:
-                if self._is_displayable(file["file"]):
-                    displayed_files.append(file)
+        displayed_files: list[dict[str, Any]] = list()
+        for file in self.files:
+            if self._is_displayable(file["file"]):
+                displayed_files.append(file)
 
-            index: int = int(
-                (event.pos().y() - (self.y * self.window.height() + 42) -
-                 self.mouse_y)
-                // (self.window.font_size * 1.5)
-            )
+        index: int = int(
+            (event.pos().y() - (self.y * self.window.height() + 42) -
+             self.mouse_y)
+            // (self.window.font_size * 1.5)
+        )
 
-            for file in self.files:
-                search_file = file["name"] == displayed_files[index]["name"]
-                if search_file and file["is_dir"]:
-                    self.hovered = event.position().y()
-                    file["is_open"] = not file["is_open"]
-                elif search_file:
-                    self.hovered = event.position().y()
-                    return Path(file["file"])
+        for file in self.files:
+            search_file = file["name"] == displayed_files[index]["name"]
+            if search_file and file["is_dir"]:
+                self.hovered = event.position().y()
+                file["is_open"] = not file["is_open"]
+            elif search_file:
+                self.hovered = event.position().y()
+                return Path(file["file"])
 
-            return "graph"
+        return ""
 
-        elif event.button() == Qt.MouseButton.RightButton:
-            displayed_files: list[dict[str, Any]] = list()
-            for file in self.files:
-                if self._is_displayable(file["file"]):
-                    displayed_files.append(file)
+    def mousePressEventRight(self, event: Any) -> str | Path:
+        '''
+        Handle the mouse event right
 
-            index: int = int(
-                (event.pos().y() - (self.y * self.window.height() + 42) -
-                 self.mouse_y)
-                // (self.window.font_size * 1.5)
-            )
+        Args:
+            None
+        Return:
+            None
+        '''
+        displayed_files: list[dict[str, Any]] = list()
+        for file in self.files:
+            if self._is_displayable(file["file"]):
+                displayed_files.append(file)
 
-            for file in self.files:
-                search_file = file["name"] == displayed_files[index]["name"]
-                if search_file and file["is_dir"]:
-                    self.hovered = event.position().y()
-                    file["is_open"] = not file["is_open"]
-                elif search_file:
-                    self.hovered = event.position().y()
-                    return Path(file["file"])
+        index: int = int(
+            (event.pos().y() - (self.y * self.window.height() + 42) -
+             self.mouse_y)
+            // (self.window.font_size * 1.5)
+        )
 
-            return "graph"
+        for file in self.files:
+            search_file = file["name"] == displayed_files[index]["name"]
+            if search_file and file["is_dir"]:
+                self.hovered = event.position().y()
+                file["is_open"] = not file["is_open"]
+            elif search_file:
+                self.hovered = event.position().y()
+                return file["file"]
+
+        return ""
 
     def wheelEvent(self, event: Any) -> bool:
         '''
