@@ -29,7 +29,7 @@ class Visualization(Widget):
         self.diameter: int = 50
         self.state: str = "neutral"
         self.display: str = "graph"
-        self.img_ratio: int = 1
+        self.img_ratio: float = 1.0
         self.index: int = 0
         self.content_lines: list[str] = []
 
@@ -334,19 +334,19 @@ class Visualization(Widget):
 
         if delta > 0:
             if self.display in ["img", "gif"]:
-                self.img_ratio = int(max([self.img_ratio - 0.1, 0.2]))
+                self.img_ratio = max([self.img_ratio - 0.1, 0.2])
             elif len(self.content_lines) > 35:
-                self.index -= 1
+                self.index += 1
                 if self.index < 0:
-                    self.index += 1
+                    self.index -= 1
 
         elif delta < 0:
             if self.display in ["img", "gif"]:
-                self.img_ratio = int(min([self.img_ratio + 0.1, 1.1]))
+                self.img_ratio = min([self.img_ratio + 0.1, 1.1])
             elif len(self.content_lines) > 35:
-                self.index += 1
+                self.index -= 1
                 if self.index >= len(self.content_lines):
-                    self.index -= 1
+                    self.index += 1
 
         return True
 

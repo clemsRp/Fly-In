@@ -44,7 +44,7 @@ class Widget(ABC):
         self.engine = engine
         self.vars = vars
         self.display: str = ""
-        self.index = 0
+        self.index: int = 0
         self.hovered: Any = None
 
     def common_draw(self, painter: QPainter) -> None:
