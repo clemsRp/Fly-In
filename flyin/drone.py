@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 
-from PyQt6.QtGui import QPixmap, QPainter
+from typing import TYPE_CHECKING
+from PyQt6.QtGui import QMovie
+
+if TYPE_CHECKING:
+    from flyin.window import Window
 
 
 class Drone:
@@ -9,7 +13,7 @@ class Drone:
     '''
 
     def __init__(
-                self, x: int, y: int, img_path: str,
+                self, window: "Window", x: int, y: int
             ) -> None:
         '''
         Initialize the drone
@@ -21,18 +25,6 @@ class Drone:
         '''
         self.x: int = x
         self.y: int = y
-        self.img: QPixmap = QPixmap(img_path).scaled(75, 75)
-
-    def draw(self, painter: QPainter) -> None:
-        '''
-        Draw the drone
-
-        Args:
-            None
-        Return:
-            None
-        '''
-        painter.drawPixmap(
-            self.x, self.y,
-            self.img
-        )
+        self.drone: QMovie = QMovie("assets/drone.gif")
+        self.drone.frameChanged.connect(window.update)
+        self.drone.start()

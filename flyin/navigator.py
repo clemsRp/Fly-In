@@ -259,7 +259,7 @@ class Navigator(Widget):
                 file["is_open"] = not file["is_open"]
             elif search_file:
                 self.hovered = event.position().y()
-                return file["file"]
+                return Path(file["file"])
 
         return ""
 

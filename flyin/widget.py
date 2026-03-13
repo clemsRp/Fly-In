@@ -44,6 +44,8 @@ class Widget(ABC):
         self.engine = engine
         self.vars = vars
         self.display: str = ""
+        self.index = 0
+        self.hovered: Any = None
 
     def common_draw(self, painter: QPainter) -> None:
         '''
@@ -86,6 +88,15 @@ class Widget(ABC):
             1, QColor("#031035"), QColor("#031035")
         )
 
+        self.engine.draw_rectangle(
+            painter,
+            int((self.x + self.width) * self.window.width() + 1),
+            start_y,
+            gap,
+            int(self.height * self.window.height() - gap),
+            1, QColor("#031035"), QColor("#031035")
+        )
+
         if end_x <= start_x + int(self.width * self.window.width() - gap):
 
             self.engine.draw_button(
@@ -104,10 +115,13 @@ class Widget(ABC):
     def mousePressEventRight(self, event: Any) -> str | Path:
         return ""
 
-    def mouseMoveEvent(self, event: Any) -> None:
+    def mouseMoveEvent(self, event: Any) -> Any:
         pass
 
     def keyPressEvent(self, move: str) -> None:
+        pass
+
+    def display_datas(res) -> None:
         pass
 
     @abstractmethod

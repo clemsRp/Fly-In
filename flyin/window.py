@@ -132,14 +132,16 @@ class Window(QMainWindow):
                         self.error = str(e)
 
             elif event.button() == Qt.MouseButton.RightButton:
-                res: str | Path = self.widgets[0].mousePressEventRight(
+                res = self.widgets[0].mousePressEventRight(
                     event
                 )
-                if res != "":
+                if isinstance(res, Path):
                     self.error = ""
                     try:
                         if res.suffix in [".svg", ".png"]:
                             self.widgets[1].display = "img"
+                        elif res.suffix == ".gif":
+                            self.widgets[1].display = "gif"
                         else:
                             self.widgets[1].display = "txt"
                             self.widgets[1].index = 0
@@ -164,6 +166,10 @@ class Window(QMainWindow):
 
         if x <= int(0.2 * self.width()) and y >= int(0.2 * self.height()):
             self.widgets[0].mouseMoveEvent(event)
+
+        elif x <= int(0.8 * self.width()) and y >= int(0.2 * self.height()):
+            res: Any = self.widgets[1].mouseMoveEvent(event)
+            self.widgets[2].hovered = res
 
         self.update()
 
@@ -200,6 +206,3 @@ class Window(QMainWindow):
 
         for widget in self.widgets:
             widget.draw(painter)
-
-        for drone in self.drones:
-            drone.draw(painter)
