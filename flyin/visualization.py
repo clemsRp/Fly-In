@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 
-from typing import TYPE_CHECKING
-from PyQt6.QtGui import QPainter, QColor, QFont, QFontMetrics
+from typing import TYPE_CHECKING, Any
+from PyQt6.QtGui import QPainter, QColor, QFont, QFontMetrics, QPixmap, QMovie
+from PyQt6.QtCore import Qt
 from flyin.widget import Widget
 from flyin.graph import Node, Connection
 from flyin.engine import Engine
 from flyin.vars import Vars
+from flyin.drone import Drone
+from math import sqrt
 
 if TYPE_CHECKING:
     from flyin.window import Window
@@ -23,12 +26,25 @@ class Visualization(Widget):
             ) -> None:
         super().__init__(x, y, width, height, title, window, engine, vars)
 
+        self.diameter: int = 50
         self.state: str = "neutral"
+        self.display: str = "graph"
+        self.img_ratio: float = 1.0
+        self.index: int = 0
+        self.content_lines: list[str] = []
+
+        self.drone: QMovie = QMovie("assets/drone.gif")
+        self.drone.frameChanged.connect(self.window.update)
+        self.drone.start()
+
+        self.drones: list[Drone] = [Drone(self.window, 500, 500)]
+
+        self.cell_x: int = 0
+        self.cell_y: int = 0
 
     def _draw_connection(
                 self,
-                painter: QPainter, connection: Connection,
-                cell_x: int, cell_y: int
+                painter: QPainter, connection: Connection
             ) -> None:
         '''
         Draw a connection inside the window
@@ -43,10 +59,10 @@ class Visualization(Widget):
         '''
         n1: Node = connection.start
         n2: Node = connection.end
-        x1: int = int(cell_x // 2 + (n1.x + 0.5) * cell_x)
-        y1: int = int(cell_y // 2 + (n1.y + 0.5) * cell_y)
-        x2: int = int(cell_x // 2 + (n2.x + 0.5) * cell_x)
-        y2: int = int(cell_y // 2 + (n2.y + 0.5) * cell_y)
+        x1: int = int(self.cell_x // 2 + (n1.x + 0.5) * self.cell_x)
+        y1: int = int(self.cell_y // 2 + (n1.y + 0.5) * self.cell_y)
+        x2: int = int(self.cell_x // 2 + (n2.x + 0.5) * self.cell_x)
+        y2: int = int(self.cell_y // 2 + (n2.y + 0.5) * self.cell_y)
 
         start_x: int = int(self.x * self.window.width())
         start_y: int = int(self.y * self.window.height())
@@ -61,7 +77,6 @@ class Visualization(Widget):
     def _draw_node(
                 self,
                 painter: QPainter, node: Node,
-                cell_x: int, cell_y: int
             ) -> None:
         '''
         Draw a connection inside the window
@@ -69,19 +84,17 @@ class Visualization(Widget):
         Args:
             painter: QPainter = The painter
             connection: Connection = The connection to draw
-            cell_x: int = The x size of a cell
-            cell_y: int = The y size of a cell
         Return:
             None
         '''
-        x: int = int(cell_x // 2 + (node.x + 0.5) * cell_x)
-        y: int = int(cell_y // 2 + (node.y + 0.5) * cell_y)
+        x: int = int(self.cell_x // 2 + (node.x + 0.5) * self.cell_x)
+        y: int = int(self.cell_y // 2 + (node.y + 0.5) * self.cell_y)
 
-        diameter: int = min([cell_x, cell_y])
-        diameter = min([diameter, 150])
+        self.diameter = min([self.cell_x, self.cell_y])
+        self.diameter = min([self.diameter, 150])
 
-        x -= int(diameter * 0.7 / 2)
-        y -= int(diameter * 0.7 / 2)
+        x -= int(self.diameter * 0.7 / 2)
+        y -= int(self.diameter * 0.7 / 2)
 
         color: str = "orange"
         if node.color != "":
@@ -92,7 +105,7 @@ class Visualization(Widget):
 
         self.engine.draw_circle(
             painter,
-            int(start_x + x), int(start_y + y), int(diameter * 0.7),
+            int(start_x + x), int(start_y + y), int(self.diameter * 0.7),
             2, QColor("white"), QColor(color)
         )
 
@@ -107,30 +120,6 @@ class Visualization(Widget):
         Return:
             None
         '''
-        start_x: int = int((self.x + self.width) * self.window.width())
-        start_y: int = int(self.y * self.window.height()) + 10
-
-        font: QFont = QFont("Arial", self.window.font_size)
-
-        metrics = QFontMetrics(font)
-
-        text_width = metrics.horizontalAdvance(str(self.window.filename)) + 25
-        text_height = metrics.height()
-
-        self.engine.draw_rectangle(
-            painter,
-            start_x - text_width, start_y,
-            text_width, text_height * 2, 1,
-            QColor("white"), QColor("white")
-        )
-
-        self.engine.write_text(
-            painter,
-            start_x - text_width + 12,
-            int(start_y + self.window.font_size * 1.5) + 2,
-            str(self.window.filename),
-            QColor("black"), font
-        )
 
         mini = [1000000, 1000000]
         maxi = [-1000000, -1000000]
@@ -145,22 +134,32 @@ class Visualization(Widget):
             if node.y > maxi[1]:
                 maxi[1] = node.y
 
-        cell_x: int = maxi[0] - mini[0] + 2
-        cell_y: int = maxi[1] - mini[1] + 2
+        self.cell_x = maxi[0] - mini[0] + 2
+        self.cell_y = maxi[1] - mini[1] + 2
 
-        cell_x = int(0.6 * self.window.width() // cell_x)
-        cell_y = int((self.window.height() - 150) // cell_y)
+        self.cell_x = int(0.6 * self.window.width() // self.cell_x)
+        self.cell_y = int((self.window.height() - 150) // self.cell_y)
 
         for liste in self.vars.vars["graph"].values():
             for (node, connection) in liste:
                 self._draw_connection(
-                    painter, connection, cell_x, cell_y
+                    painter, connection
                 )
 
         for node in self.vars.vars["graph"].keys():
             self._draw_node(
-                painter, node, cell_x, cell_y
+                painter, node
             )
+
+        for drone in self.drones:
+            current_frame = drone.drone.currentPixmap()
+
+            if not current_frame.isNull():
+                painter.drawPixmap(
+                    drone.x, drone.y,
+                    self.diameter, self.diameter,
+                    current_frame
+                )
 
     def _draw_error(self, painter: QPainter, error: str) -> None:
         '''
@@ -216,16 +215,188 @@ class Visualization(Widget):
             None
         '''
         self.common_draw(painter)
+
+        text: str = ""
+        if self.window.error == "":
+            if self.display == "graph":
+                text = self.window.filename
+            else:
+                text = self.vars.vars["visu_file"]
+            start_x: int = int((self.x + self.width) * self.window.width())
+            start_y: int = int(self.y * self.window.height()) + 10
+
+            font: QFont = QFont("Arial", self.window.font_size)
+
+            metrics = QFontMetrics(font)
+
+            text_width = metrics.horizontalAdvance(str(text)) + 25
+            text_height = metrics.height()
+
+            self.engine.draw_rectangle(
+                painter,
+                start_x - text_width, start_y,
+                text_width, text_height * 2, 1,
+                QColor("white"), QColor("white")
+            )
+
+            self.engine.write_text(
+                painter,
+                start_x - text_width + 12,
+                int(start_y + self.window.font_size * 1.5) + 2,
+                text,
+                QColor("black"), font
+            )
+
         if self.window.error != "":
             self._draw_error(painter, self.window.error)
-        else:
+
+        elif self.display == "graph":
             self._draw_visualization(painter)
 
-            if self.state == "start":
-                self._draw_start(painter)
-            elif self.state == "end":
-                self._draw_end(painter)
-            elif self.state == "start":
-                self._draw_start(painter)
-            elif self.state == "start":
-                self._draw_start(painter)
+        elif self.display in ["img", "gif"]:
+            size: int = int(min([
+                self.width * self.window.width(),
+                self.height * self.window.height()
+            ]) * 0.7)
+            x: int = int(
+                self.x * self.window.width() +
+                (self.width * self.window.width()) // 2 -
+                size * self.img_ratio // 2
+            )
+            y: int = int(
+                self.y * self.window.height() +
+                (self.height * self.window.height()) // 2 -
+                size * self.img_ratio // 2
+            )
+
+            if self.display == "img":
+                painter.drawPixmap(
+                    x, y,
+                    QPixmap(self.vars.vars["visu_file"]).scaled(
+                        int(size * self.img_ratio),
+                        int(size * self.img_ratio),
+                        Qt.AspectRatioMode.KeepAspectRatio,
+                        Qt.TransformationMode.SmoothTransformation
+                    )
+                )
+            else:
+                current_frame = self.drone.currentPixmap()
+
+                if not current_frame.isNull():
+                    painter.drawPixmap(
+                        x, y, current_frame.scaled(
+                            int(size * self.img_ratio),
+                            int(size * self.img_ratio),
+                            Qt.AspectRatioMode.KeepAspectRatio,
+                            Qt.TransformationMode.SmoothTransformation
+                        )
+                    )
+
+        else:
+            with open(self.vars.vars["visu_file"], 'r') as f:
+                self.content_lines = f.readlines()
+
+                for k in range(self.index, len(self.content_lines)):
+                    num: str = (3 - len(str(k))) * " " + str(k) + "   "
+
+                    y = int(
+                        (k - self.index) * self.window.font_size * 1.5 +
+                        self.y * self.window.height() + 55
+                    )
+
+                    if y > (self.y + self.height) * self.window.height():
+                        break
+
+                    self.engine.write_text(
+                        painter,
+                        int(self.x * self.window.width() + 35),
+                        int(
+                            (k - self.index) * self.window.font_size * 1.5 +
+                            self.y * self.window.height() + 55
+                        ),
+                        num + self.content_lines[k],
+                        QColor("white"), QFont("Arial", self.window.font_size)
+                    )
+
+    def wheelEvent(self, event: Any) -> bool:
+        '''
+        Handle the mouse wheel
+
+        Args:
+            None
+        Return:
+            None
+        '''
+        if self.display == "graph":
+            return False
+
+        delta = event.angleDelta().y()
+
+        if delta > 0:
+            if self.display in ["img", "gif"]:
+                self.img_ratio = max([self.img_ratio - 0.1, 0.2])
+            elif len(self.content_lines) > 35:
+                self.index += 1
+                if self.index < 0:
+                    self.index -= 1
+
+        elif delta < 0:
+            if self.display in ["img", "gif"]:
+                self.img_ratio = min([self.img_ratio + 0.1, 1.1])
+            elif len(self.content_lines) > 35:
+                self.index -= 1
+                if self.index >= len(self.content_lines):
+                    self.index += 1
+
+        return True
+
+    def mouseMoveEvent(self, event: Any) -> Any:
+        '''
+        Handle the mouse move
+
+        Args:
+            None
+        Return:
+            None
+        '''
+        if self.display != "graph":
+            return
+        x: int = event.position().x()
+        y: int = event.position().y()
+
+        start_x: int = int(self.x * self.window.width())
+        start_y: int = int(self.y * self.window.height())
+
+        for (node1, connections) in self.vars.vars["graph"].items():
+            x1 = int(
+                self.cell_x // 2 +
+                (node1.x + 0.5) * self.cell_x + start_x
+            )
+            y1 = int(
+                self.cell_y // 2 +
+                (node1.y + 0.5) * self.cell_y + start_y
+            )
+
+            dist1 = sqrt((x1 - x) ** 2 + (y1 - y) ** 2)
+            if dist1 <= self.diameter * 0.7 // 2:
+                return node1
+
+            for (node2, connection) in connections:
+                x2 = int(
+                    self.cell_x // 2 +
+                    (node2.x + 0.5) * self.cell_x + start_x
+                )
+                y2 = int(
+                    self.cell_y // 2 +
+                    (node2.y + 0.5) * self.cell_y + start_y
+                )
+
+                dist2 = sqrt((x2 - x) ** 2 + (y2 - y) ** 2)
+                dist_t = sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+
+                diff = dist_t - dist1 - dist2
+
+                if diff <= 0.25 and diff >= -0.25:
+                    return connection
+
+        return None

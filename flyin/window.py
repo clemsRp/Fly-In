@@ -80,6 +80,26 @@ class Window(QMainWindow):
         elif event.key() == Qt.Key.Key_W:
             self.widgets[1].keyPressEvent("pause")
 
+    def wheelEvent(self, event: Any) -> None:
+        '''
+        Handle the mouse wheel
+
+        Args:
+            None
+        Return:
+            None
+        '''
+        x: int = event.position().x()
+        y: int = event.position().y()
+
+        if x <= int(0.2 * self.width()) and y >= int(0.2 * self.height()):
+            if self.widgets[0].wheelEvent(event):
+                self.update()
+
+        elif x <= int(0.8 * self.width()) and y >= int(0.2 * self.height()):
+            if self.widgets[1].wheelEvent(event):
+                self.update()
+
     def mousePressEvent(self, event: Any) -> None:
         '''
         Handle the mouse event
@@ -93,25 +113,42 @@ class Window(QMainWindow):
         y: int = event.pos().y()
 
         if x <= int(0.2 * self.width()) and y >= int(0.2 * self.height()):
-            res: str | Path = self.widgets[0].mousePressEvent(event)
-            if res != "":
-                self.error = ""
-                try:
-                    self.filename = str(res)
-                    self.vars = self.parser.parser(str(self.filename))
+            if event.button() == Qt.MouseButton.LeftButton:
+                res: str | Path = self.widgets[0].mousePressEventLeft(
+                    event
+                )
+                if res != "":
+                    self.error = ""
+                    try:
+                        self.filename = str(res)
+                        self.vars = self.parser.parser(str(self.filename))
 
-                    self.widgets[1] = Visualization(
-                        0.2, 0.2, 0.6, 0.75, "Visualization",
-                        self, self.engine, self.vars
-                    )
+                        self.widgets[1] = Visualization(
+                            0.2, 0.2, 0.6, 0.75, "Visualization",
+                            self, self.engine, self.vars
+                        )
 
-                    self.widgets[2] = Stats(
-                        0.8, 0.2, 0.195, 0.75, "Stats",
-                        self, self.engine, self.vars
-                    )
+                    except Exception as e:
+                        self.error = str(e)
 
-                except Exception as e:
-                    self.error = str(e)
+            elif event.button() == Qt.MouseButton.RightButton:
+                res = self.widgets[0].mousePressEventRight(
+                    event
+                )
+                if isinstance(res, Path):
+                    self.error = ""
+                    try:
+                        if res.suffix in [".svg", ".png"]:
+                            self.widgets[1].display = "img"
+                        elif res.suffix == ".gif":
+                            self.widgets[1].display = "gif"
+                        else:
+                            self.widgets[1].display = "txt"
+                            self.widgets[1].index = 0
+                        self.vars.vars["visu_file"] = str(res)
+
+                    except Exception as e:
+                        self.error = str(e)
 
         self.update()
 
@@ -129,6 +166,10 @@ class Window(QMainWindow):
 
         if x <= int(0.2 * self.width()) and y >= int(0.2 * self.height()):
             self.widgets[0].mouseMoveEvent(event)
+
+        elif x <= int(0.8 * self.width()) and y >= int(0.2 * self.height()):
+            res: Any = self.widgets[1].mouseMoveEvent(event)
+            self.widgets[2].hovered = res
 
         self.update()
 
@@ -151,7 +192,7 @@ class Window(QMainWindow):
 
         size: int = (self.width() + self.height()) // 2
 
-        logo: QPixmap = QPixmap("assets/icons/logo.png").scaled(
+        logo: QPixmap = QPixmap("assets/logo.png").scaled(
             int(size * 0.15), int(size * 0.075),
             Qt.AspectRatioMode.KeepAspectRatio,
             Qt.TransformationMode.SmoothTransformation
@@ -165,6 +206,3 @@ class Window(QMainWindow):
 
         for widget in self.widgets:
             widget.draw(painter)
-
-        for drone in self.drones:
-            drone.draw(painter)
